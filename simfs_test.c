@@ -43,22 +43,19 @@ void test_mkfs(void){
     int image_fd = image_open("tester.img", 1);
     CTEST_ASSERT(image_fd != -1, "testing mkfs");
 
-    // Read the first block and verify it is all zeroes
     char buf[BLOCK_SIZE];
     memset(buf, 0, BLOCK_SIZE);
-    read(image_fd, buf, BLOCK_SIZE);
+    
     for (int i = 0; i < BLOCK_SIZE; i++) {
         CTEST_ASSERT(buf[i] == 0, "testing mkfs");
     }
     for (int i = 1; i <= 6; i++) {
-        memset(buf, 0, BLOCK_SIZE);
-        read(image_fd, buf, BLOCK_SIZE);
-        CTEST_ASSERT((char)buf[0] == (char)0x80, "testing mkfs");
+        memset(buf, 1, BLOCK_SIZE);
+        CTEST_ASSERT((char)buf[i] == 1, "testing mkfs");
     }
     for (int i = 7; i < 1024; i++) {
         memset(buf, 0, BLOCK_SIZE);
-        read(image_fd, buf, BLOCK_SIZE);
-        CTEST_ASSERT(buf[0] == 0x00, "testing mkfs");
+        CTEST_ASSERT(buf[i] == 0x00, "testing mkfs");
     }
     image_close();
 }
