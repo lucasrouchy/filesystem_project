@@ -67,7 +67,7 @@ void test_alloc(void){
     CTEST_ASSERT(allocated_bit_num != -1, "testing ialloc");
 
     for(int i=0; i < BLOCK_SIZE; i++) { 
-        block[i] = 255;
+        block[i] = 0xFF;
     }
     bwrite(0, block);
     int full_bit_num = ialloc();
