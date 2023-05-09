@@ -7,8 +7,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-
-
 unsigned char *bread(int block_num, unsigned char *block){
 
     if (lseek(image_fd, block_num * BLOCK_SIZE, SEEK_SET) == -1){
@@ -32,18 +30,16 @@ void bwrite(int block_num, unsigned char *block){
     }
 }
 int alloc(void){
-    unsigned char block[BLOCK_SIZE];
-    int i = 0;
-    while (1){
-        bread(i, block);
-        for (int j = 0; j < 4096; j++){
-            if (block[j] != 0xff){
-                int bit = find_low_clear_bit(block[j]);
-                set_free(block, i * 8 + bit, 1);
-                bwrite(i, block);
-                return i * 8 + bit;
-            }
-        }
-        i++;
+    unsigned char block[BLOCK_SIZE] = {0};
+    int bit_num;
+   
+    bread(0, block);
+    
+    bit_num = find_free(block);
+    if (bit_num != -1) {
+        
+        set_free(block, bit_num, 1);   
     }
+    bwrite(0, block);
+    return bit_num;
 }

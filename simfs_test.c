@@ -9,20 +9,6 @@
 #include <time.h>
 
 
-
-// int check = image_open("test.img", 1);
-// if (check < 0){
-//     printf("image open");
-//     return 1;
-// }
-// printf("image file opened successfully\n");
-// check = image_close();
-// if (check < 0){
-//     printf("image close");
-//     return 1;
-// }
-// printf("image file closed successfully\n");
-
 #ifdef CTEST_ENABLE
 
 void test_image_open(void){
@@ -32,32 +18,34 @@ void test_image_close(void){
     CTEST_ASSERT(image_close() == 0, "testing image close");
 }
 void test_ialloc(void){
-    int inode1 = ialloc();
-    // int inode2 = ialloc();
-    CTEST_ASSERT(inode1 != -1, "testing ialloc");
-    CTEST_ASSERT(inode1 >= 0 && inode1 < 4096, "testing ialloc");
-    // CTEST_ASSERT(inode1 != inode2, "testing ialloc");
+    unsigned char block[BLOCK_SIZE] = { 0 };
+    int bit_num;
+    int allocated_bit_num;
+    image_open("test img", 1);
+    bread(0, block);
+    bit_num = find_free(block);
+    allocated_bit_num = ialloc();
+    CTEST_ASSERT(bit_num == allocated_bit_num, "testing ialloc");
+    CTEST_ASSERT(allocated_bit_num != -1, "testing ialloc");
+
+    for(int i=0; i < BLOCK_SIZE; i++) { 
+        block[i] = 255;
+    }
+    bwrite(0, block);
+    int full_bit_num = ialloc();
+    CTEST_ASSERT(full_bit_num == -1, "testing ialloc");
+    image_close();
 }
 void test_mkfs(void){
-    mkfs();
-    int image_fd = image_open("tester.img", 1);
-    CTEST_ASSERT(image_fd != -1, "testing mkfs");
-
-    char buf[BLOCK_SIZE];
-    memset(buf, 0, BLOCK_SIZE);
+    unsigned char block[BLOCK_SIZE] = { 0 };
+    unsigned char buf_comparison[BLOCK_SIZE] = { 127 };
     
-    for (int i = 0; i < BLOCK_SIZE; i++) {
-        CTEST_ASSERT(buf[i] == 0, "testing mkfs");
-    }
-    for (int i = 1; i <= 6; i++) {
-        memset(buf, 1, BLOCK_SIZE);
-        CTEST_ASSERT((char)buf[i] == 1, "testing mkfs");
-    }
-    for (int i = 7; i < 1024; i++) {
-        memset(buf, 0, BLOCK_SIZE);
-        CTEST_ASSERT(buf[i] == 0x00, "testing mkfs");
-    }
-    image_close();
+    image_open("tester.img", 1);
+    mkfs();
+    bread(0, block);
+
+    int mem_comp = memcmp(block, buf_comparison, BLOCK_SIZE);
+    CTEST_ASSERT(mem_comp == 0, "Testing mkfs");
 }
 void test_bread_and_bwrite(void){
     unsigned char block[BLOCK_SIZE];
@@ -68,12 +56,23 @@ void test_bread_and_bwrite(void){
 }
 
 void test_alloc(void){
-    int node = alloc();
-    // int node2 = alloc();
-    CTEST_ASSERT(node != -1, "testing alloc");
-    CTEST_ASSERT(node >= 0 && node < 4096, "testing alloc");
-    // CTEST_ASSERT(node != node2, "testing alloc");
-    
+    unsigned char block[BLOCK_SIZE] = { 0 };
+    int bit_num;
+    int allocated_bit_num;
+    image_open("test img", 1);
+    bread(0, block);
+    bit_num = find_free(block);
+    allocated_bit_num = ialloc();
+    CTEST_ASSERT(bit_num == allocated_bit_num, "testing ialloc");
+    CTEST_ASSERT(allocated_bit_num != -1, "testing ialloc");
+
+    for(int i=0; i < BLOCK_SIZE; i++) { 
+        block[i] = 255;
+    }
+    bwrite(0, block);
+    int full_bit_num = ialloc();
+    CTEST_ASSERT(full_bit_num == -1, "testing ialloc");
+    image_close();
 }
 void test_find_free(void){
     unsigned char block[BLOCK_SIZE];
@@ -108,7 +107,7 @@ int main(void){
     test_ialloc();
     test_mkfs();
     test_bread_and_bwrite();
-    // test_bwrite();
+    // // test_bwrite();
     test_alloc();
     test_find_free();
     test_find_low_clear_bit();
