@@ -37,14 +37,15 @@ void test_ialloc(void){
     image_close();
 }
 void test_find_incore_free(void){
-    struct inode incore[MAX_SYS_OPEN_FILES] = {0};
-    incore[0].ref_count = 1;
-    incore[1].ref_count = 0;
-    incore[2].ref_count = 2;
-    incore[3].ref_count = 0;
-    incore[4].ref_count = 0;
+    struct inode incore_test[MAX_SYS_OPEN_FILES] = {0};
+    incore_test[0].ref_count = 1;
+    incore_test[1].ref_count = 0;
+    incore_test[2].ref_count = 2;
+    incore_test[3].ref_count = 0;
+    incore_test[4].ref_count = 0;
     struct inode *free_inode = find_incore_free();
-    CTEST_ASSERT(free_inode == &incore[1], "testing find_incore_free");
+    CTEST_ASSERT(free_inode !=NULL, "testing find_incore_free");
+    CTEST_ASSERT(free_inode->ref_count == 0, "testing find_incore_free");
 }
 
 void test_mkfs(void){
@@ -116,6 +117,7 @@ int main(void){
     test_image_open();
     test_image_close();
     test_ialloc();
+    test_find_incore_free();
     test_mkfs();
     test_bread_and_bwrite();
     // // test_bwrite();
