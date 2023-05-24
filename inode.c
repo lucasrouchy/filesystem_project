@@ -5,20 +5,6 @@
 
 static struct inode incore[MAX_SYS_OPEN_FILES] = {0};
 
-int ialloc(void){
-    unsigned char block[BLOCK_SIZE] = {0};
-    int bit_num = -1;
-    // read inode map from disk
-    bread(0, block);
-    // find a free inode
-    bit_num = find_free(block);
-    if (bit_num != -1) {
-        // mark inode as allocated
-        set_free(block, bit_num, 1);
-    }
-    bwrite(0, block);
-    return bit_num;
-}
 struct inode *find_incore_free(void){
     //goes through all inodes looking for indoes with ref_count == 0
     for (int i = 0; i < INODES_PER_BLOCK; i++) {
@@ -28,6 +14,7 @@ struct inode *find_incore_free(void){
     }
     return NULL;
 }
+
 struct inode *find_incore(unsigned int inode_num){
     
     for (int i = 0; i < INODES_PER_BLOCK; i++) {
@@ -106,6 +93,7 @@ struct inode *iget(int inode_num){
         return in;
     }
 }
+
 void iput(struct inode *in){
     if(in->ref_count == 0){
         return;
@@ -117,4 +105,35 @@ void iput(struct inode *in){
         //write the inode to disk
         write_inode(in);
     }
+}
+
+int ialloc(void){
+    unsigned char block[BLOCK_SIZE] = {0};
+    int bit_num = -1;
+    // read inode map from disk
+    bread(0, block);
+    // find a free inode
+    bit_num = find_free(block);
+    
+    if (bit_num != -1) {
+        // mark inode as allocated
+        set_free(block, bit_num, 1);
+    }
+    else{
+        return NULL;
+    }
+    //get an incore version of the inode
+    struct inode *in = iget(bit_num);
+    //set the size, owner id, permissions, flags to 0
+    in->size = 0;
+    in->owner_id = 0;
+    in->permissions = 0;
+    in->flags = 0;
+    //set the block pointers to 0
+    for (int i = 0; i < INODE_PTR_COUNT; i++) {
+        in->block_ptr[i] = 0;
+    }
+    //set the inode number argument to the inode number
+    in->inode_num = bit_num;
+    return in;
 }
