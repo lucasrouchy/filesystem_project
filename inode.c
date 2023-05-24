@@ -79,3 +79,42 @@ void write_inode(struct inode *in){
     }
     bwrite(block_offset, block);
 }
+
+struct inode *iget(int inode_num){
+    struct inode *in = NULL;
+    //search for the inode number incore
+    in = find_incore(inode_num);
+    //if found
+    if(in != NULL){
+        //increment the ref count and return the pointer
+        in->ref_count++;
+        return in;
+    }
+    else{
+        //find a free inode incore
+        in = find_incore_free();
+        //if none found
+        if(in == NULL){
+            //return null
+            return NULL;
+        }
+        // read the data from the disk into read_inode
+        read_inode(in, inode_num);
+        //set the ref count to 1 and the inode number to the argument
+        in->ref_count = 1;
+        in->inode_num = inode_num;
+        return in;
+    }
+}
+void iput(struct inode *in){
+    if(in->ref_count == 0){
+        return;
+    }
+    //decrement the ref count
+    in->ref_count--;
+    //if the ref count is 0
+    if(in->ref_count == 0){
+        //write the inode to disk
+        write_inode(in);
+    }
+}
