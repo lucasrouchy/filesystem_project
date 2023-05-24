@@ -120,7 +120,7 @@ int ialloc(void){
         set_free(block, bit_num, 1);
     }
     else{
-        return NULL;
+        return -1;
     }
     //get an incore version of the inode
     struct inode *in = iget(bit_num);
@@ -135,5 +135,8 @@ int ialloc(void){
     }
     //set the inode number argument to the inode number
     in->inode_num = bit_num;
-    return in;
+
+    write_inode(in);
+    
+    return bit_num;
 }
