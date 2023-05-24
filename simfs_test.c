@@ -36,6 +36,17 @@ void test_ialloc(void){
     CTEST_ASSERT(full_bit_num == -1, "testing ialloc");
     image_close();
 }
+void test_find_incore_free(void){
+    struct inode incore[MAX_SYS_OPEN_FILES] = {0};
+    incore[0].ref_count = 1;
+    incore[1].ref_count = 0;
+    incore[2].ref_count = 2;
+    incore[3].ref_count = 0;
+    incore[4].ref_count = 0;
+    struct inode *free_inode = find_incore_free();
+    CTEST_ASSERT(free_inode == &incore[1], "testing find_incore_free");
+}
+
 void test_mkfs(void){
     unsigned char block[BLOCK_SIZE] = { 0 };
     unsigned char buf_comparison[BLOCK_SIZE] = { 127 };
