@@ -2,8 +2,7 @@
 #include "block.h"
 #include "free.h"
 #include "pack.h"
-
-static struct inode incore[MAX_SYS_OPEN_FILES] = {0};
+struct inode incore[MAX_SYS_OPEN_FILES] = {0};
 
 struct inode *find_incore_free(void){
     //goes through all inodes looking for indoes with ref_count == 0
@@ -19,7 +18,7 @@ struct inode *find_incore(unsigned int inode_num){
     
     for (int i = 0; i < INODES_PER_BLOCK; i++) {
         //checks for both ref count and inode number
-        if (incore[i].inode_num == inode_num && incore[i].ref_count != 0) {
+        if (incore[i].inode_num == inode_num && incore[i].ref_count == 0) {
             return &incore[i];
         }
     }
@@ -30,8 +29,9 @@ void read_inode(struct inode *in, int inode_num){
     unsigned char block[BLOCK_SIZE] = {0};
     
     int block_offset = inode_num % INODES_PER_BLOCK;
+    int inode_block = inode_num / INODES_PER_BLOCK + FIRST_INODE_BLOCK;
     int block_offset_bytes = block_offset * INODE_SIZE;
-    bread(block_offset, block);
+    bread(inode_block, block);
     //reads the inode and maps it to the in inode struct from the argument
     in->size = read_u32(block + block_offset_bytes);
     in->owner_id = read_u16(block + block_offset_bytes + 4);
@@ -44,7 +44,7 @@ void read_inode(struct inode *in, int inode_num){
     }
     //not sure if I should set these to zero since they are incore variables or if I should read them like the other on disk variables.
     in->ref_count = 0;
-    in->inode_num = 0;
+    in->inode_num = inode_num;
     
 }
 void write_inode(struct inode *in){
