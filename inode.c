@@ -51,9 +51,10 @@ void write_inode(struct inode *in){
     unsigned char block[BLOCK_SIZE] = {0};
     
     int block_offset = in->inode_num % INODES_PER_BLOCK;
+    int inode_block = in->inode_num / INODES_PER_BLOCK + FIRST_INODE_BLOCK;
     int block_offset_bytes = block_offset * INODE_SIZE;
     //read the block containing the inode from disk
-    bread(block_offset, block);
+    bread(inode_block, block);
     //writes the inode to the block
     write_u32(block + block_offset_bytes, in->size);
     write_u16(block + block_offset_bytes + 4, in->owner_id);
@@ -64,7 +65,7 @@ void write_inode(struct inode *in){
     for (int i = 0; i < INODE_PTR_COUNT; i++) {
         write_u16(block + block_offset_bytes + 9 + i * 2, in->block_ptr[i]);
     }
-    bwrite(block_offset, block);
+    bwrite(inode_block, block);
 }
 
 struct inode *iget(int inode_num){

@@ -89,7 +89,39 @@ void test_read_inode(void){
     for(int i = 0; i < INODE_PTR_COUNT; i++){
          CTEST_ASSERT(in.block_ptr[i] == 10 + i, "testing read_inode");
     }
+    image_close();
     
+}
+void test_write_inode(void){
+    image_open("write inode", 1);
+    mkfs();
+        
+    struct inode in;
+    in.inode_num = 2;
+    in.size = 10;
+    in.owner_id = 20;
+    in.permissions = 1;
+    in.flags = 3;
+    in.link_count = 5;
+    for(int i = 0; i < INODE_PTR_COUNT; i++){
+        in.block_ptr[i] = 10 + i;
+    }
+    unsigned char block[BLOCK_SIZE] = { 0 };
+    int block_offset = in.inode_num % INODES_PER_BLOCK;
+    int inode_block = in.inode_num / INODES_PER_BLOCK  + FIRST_INODE_BLOCK;
+    int block_offset_bytes = block_offset * INODE_SIZE; 
+    write_inode(&in);
+
+    bread(inode_block, block);
+    CTEST_ASSERT(read_u32(block + block_offset_bytes) == 10, "testing write_inode");
+    CTEST_ASSERT(read_u16(block + block_offset_bytes + 4) == 20, "testing write_inode");
+    CTEST_ASSERT(read_u8(block + block_offset_bytes + 6) == 1, "testing write_inode");
+    CTEST_ASSERT(read_u8(block + block_offset_bytes + 7) == 3, "testing write_inode");
+    CTEST_ASSERT(read_u8(block + block_offset_bytes + 8) == 5, "testing write_inode");
+    for(int i = 0; i < INODE_PTR_COUNT; i++){
+        CTEST_ASSERT(read_u16(block + block_offset_bytes + 9 + i*2) == 10 + i, "testing write_inode");
+    }
+    image_close();
 }
 
 void test_mkfs(void){
@@ -164,6 +196,7 @@ int main(void){
     test_find_incore_free();
     test_find_incore();
     test_read_inode();
+    test_write_inode();
     test_mkfs();
     test_bread_and_bwrite();
     // // test_bwrite();
