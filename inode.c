@@ -8,7 +8,7 @@ struct inode *find_incore_free(void){
     //goes through all inodes looking for indoes with ref_count == 0
     for (int i = 0; i < INODES_PER_BLOCK; i++) {
         if (incore[i].ref_count == 0) {
-            return &incore[i];
+            return incore + i;
         }
     }
     return NULL;
@@ -19,7 +19,7 @@ struct inode *find_incore(unsigned int inode_num){
     for (int i = 0; i < INODES_PER_BLOCK; i++) {
         //checks for both ref count and inode number
         if (incore[i].inode_num == inode_num && incore[i].ref_count == 0) {
-            return &incore[i];
+            return incore + i;
         }
     }
     return NULL;
@@ -112,7 +112,7 @@ int ialloc(void){
     unsigned char block[BLOCK_SIZE] = {0};
     int bit_num = -1;
     // read inode map from disk
-    bread(0, block);
+    bread(1, block);
     // find a free inode
     bit_num = find_free(block);
     
@@ -125,6 +125,9 @@ int ialloc(void){
     }
     //get an incore version of the inode
     struct inode *in = iget(bit_num);
+    if(in == NULL){
+        return -1;
+    }
     //set the size, owner id, permissions, flags to 0
     in->size = 0;
     in->owner_id = 0;

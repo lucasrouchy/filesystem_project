@@ -15,7 +15,7 @@ struct inode {
     unsigned short block_ptr[INODE_PTR_COUNT];
 
     unsigned int ref_count;  // in-core only
-    int inode_num;
+    unsigned int inode_num;
 };
 
 extern struct inode incore[MAX_SYS_OPEN_FILES];

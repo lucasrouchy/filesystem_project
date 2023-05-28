@@ -24,7 +24,7 @@ void test_ialloc(void){
     int bit_num;
     int allocated_bit_num;
     image_open("test img", 1);
-    bread(0, block);
+    bread(1, block);
     bit_num = find_free(block);
     allocated_bit_num = ialloc();
     CTEST_ASSERT(bit_num == allocated_bit_num, "testing ialloc");
@@ -33,7 +33,7 @@ void test_ialloc(void){
     for(int i=0; i < BLOCK_SIZE; i++) { 
         block[i] = 255;
     }
-    bwrite(0, block);
+    bwrite(1, block);
     int full_bit_num = ialloc();
     CTEST_ASSERT(full_bit_num == -1, "testing ialloc");
     image_close();
@@ -167,7 +167,7 @@ void test_mkfs(void){
     
     image_open("tester.img", 1);
     mkfs();
-    bread(0, block);
+    bread(2, block);
 
     int mem_comp = memcmp(block, buf_comparison, BLOCK_SIZE);
     CTEST_ASSERT(mem_comp == 0, "Testing mkfs");
@@ -185,17 +185,17 @@ void test_alloc(void){
     int bit_num;
     int allocated_bit_num;
     image_open("test img", 1);
-    bread(0, block);
+    bread(2, block);
     bit_num = find_free(block);
-    allocated_bit_num = ialloc();
+    allocated_bit_num = alloc();
     CTEST_ASSERT(bit_num == allocated_bit_num, "testing ialloc");
     CTEST_ASSERT(allocated_bit_num != -1, "testing ialloc");
 
     for(int i=0; i < BLOCK_SIZE; i++) { 
         block[i] = 0xFF;
     }
-    bwrite(0, block);
-    int full_bit_num = ialloc();
+    bwrite(2, block);
+    int full_bit_num = alloc();
     CTEST_ASSERT(full_bit_num == -1, "testing ialloc");
     image_close();
 }

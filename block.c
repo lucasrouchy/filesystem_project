@@ -33,13 +33,13 @@ int alloc(void){
     unsigned char block[BLOCK_SIZE] = {0};
     int bit_num;
    
-    bread(0, block);
+    bread(2, block);
     
     bit_num = find_free(block);
     if (bit_num != -1) {
         
         set_free(block, bit_num, 1);   
     }
-    bwrite(0, block);
+    bwrite(2, block);
     return bit_num;
 }
