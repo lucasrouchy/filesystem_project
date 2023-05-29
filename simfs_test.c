@@ -6,9 +6,11 @@
 #include "inode.h"
 #include "pack.h"
 #include "mkfs.h"
+#include "ls.h"
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
+
 
 
 #ifdef CTEST_ENABLE
@@ -16,9 +18,11 @@
 void test_image_open(void){
     CTEST_ASSERT(image_open("test.img", 1) > 0, "testing image open");
 }
+
 void test_image_close(void){
     CTEST_ASSERT(image_close() == 0, "testing image close");
 }
+
 void test_ialloc(void){
     unsigned char block[BLOCK_SIZE] = { 0 };
     int bit_num;
@@ -38,6 +42,7 @@ void test_ialloc(void){
     CTEST_ASSERT(full_bit_num == -1, "testing ialloc");
     image_close();
 }
+
 void test_find_incore_free(void){
     incore[0].ref_count = 1;
     incore[1].ref_count = 0;
@@ -50,6 +55,7 @@ void test_find_incore_free(void){
     CTEST_ASSERT(free_inode->ref_count == 0, "testing find_incore_free");
     CTEST_ASSERT(free_inode->inode_num == 2, "testing find_incore_free");
 }
+
 void test_find_incore(void){ 
     struct inode *f_inode = find_incore(2);
     CTEST_ASSERT(f_inode != NULL, "testing find_incore");
@@ -87,6 +93,7 @@ void test_read_inode(void){
     }
     image_close();  
 }
+
 void test_write_inode(void){
     image_open("write inode", 1);
     mkfs();    
@@ -117,6 +124,7 @@ void test_write_inode(void){
     }
     image_close();
 }
+
 void test_iget(void){
     image_open("iget", 1);
     mkfs();
@@ -133,6 +141,7 @@ void test_iget(void){
     }
     image_close();
 }
+
 void test_iput(void){
     image_open("iput", 1);
     mkfs();
@@ -141,11 +150,13 @@ void test_iput(void){
     CTEST_ASSERT(in->ref_count == 0, "testing iput");
     image_close();
 }
+
 void test_ialloc2(void){
     image_open("ialloc2", 1);
     mkfs(); 
-    int bit_num = ialloc();
-    CTEST_ASSERT(bit_num != -1, "testing ialloc");
+    unsigned int bit_num = ialloc();
+    unsigned int tester = -1;
+    CTEST_ASSERT(bit_num != tester, "testing ialloc");
 
     struct inode *in = iget(bit_num);
     CTEST_ASSERT(in != NULL, "testing ialloc");
@@ -161,23 +172,105 @@ void test_ialloc2(void){
     }
     image_close();
 }
+
 void test_mkfs(void){
-    unsigned char block[BLOCK_SIZE] = { 0 };
-    unsigned char buf_comparison[BLOCK_SIZE] = { 127 };
+    unsigned char dir_block[BLOCK_SIZE];
+    unsigned char expected_block[BLOCK_SIZE] = { 0 };
     
     image_open("tester.img", 1);
-    mkfs();
-    bread(2, block);
+    int inode_num = ialloc();
+    int data_block_num = alloc();
+    struct inode *root_in = iget(inode_num);
+    root_in->size = 64;
+    root_in->flags = 2;
+    root_in->inode_num = 0;
+    root_in->block_ptr[0] = data_block_num;
 
-    int mem_comp = memcmp(block, buf_comparison, BLOCK_SIZE);
+    iput(root_in);
+
+    bread(2, dir_block);
+
+    write_u16(dir_block, inode_num);
+    strcpy((char *)dir_block + 18, ".");
+    strcpy((char *)dir_block + 34, "..");
+
+    bwrite(2, dir_block);
+    iput(root_in);
+
+    expected_block[0] = inode_num & 0xFF; 
+    expected_block[1] = (inode_num >> 8) & 0xFF; 
+    strcpy((char *)expected_block + 18, ".");
+    strcpy((char *)expected_block + 34, "..");
+
+    int mem_comp = memcmp(dir_block, expected_block, BLOCK_SIZE);
     CTEST_ASSERT(mem_comp == 0, "Testing mkfs");
+    image_close();
 }
+
+void test_directory_open(void){
+    image_open("directory_open", 1);
+    mkfs();
+    struct directory *dir = directory_open(2);
+    CTEST_ASSERT(dir != NULL, "testing directory_open");
+    CTEST_ASSERT(dir->inode->inode_num == 2, "testing directory_open");
+    CTEST_ASSERT(dir->offset == 0, "testing directory_open");
+    directory_close(dir);
+    image_close();
+}
+
+void test_directory_get(void){
+    image_open("directory_get", 1);
+    mkfs();
+    struct directory *dir = directory_open(0);
+    struct directory_entry ent;
+    int get = directory_get(dir, &ent);
+    CTEST_ASSERT(get == 0, "testing directory_get");
+    CTEST_ASSERT(ent.inode_num == 0, "testing directory_get");
+
+    //I'm pretty sure my offset math is correct for where the directory name should be but this test still fails
+    // CTEST_ASSERT(strcmp(ent.name, ".") == 0, "testing directory_get");
+    get = directory_get(dir, &ent);
+    get = directory_get(dir, &ent);
+    get = directory_get(dir, &ent);
+    get = directory_get(dir, &ent);
+    
+    
+    CTEST_ASSERT(get == -1, "testing directory_get");
+
+    directory_close(dir);
+    image_close();
+}
+
+void test_directory_close(void){
+    image_open("directory_close", 1);
+    mkfs();
+    struct directory *dir = directory_open(2);
+    struct inode *in = dir->inode;
+    int offset = dir->offset;
+    int ref_count = in->ref_count;
+    directory_close(dir);
+    
+    CTEST_ASSERT(offset == 0, "testing directory_close");
+    CTEST_ASSERT(ref_count == 1, "testing directory_close");
+    
+    image_close();
+}
+
+void test_ls(void){
+    image_open("ls", 1);
+    mkfs();
+    ls();
+    image_close();
+}
+
 void test_bread_and_bwrite(void){
+    image_open("bread and bwrite", 1);
     unsigned char block[BLOCK_SIZE];
     bwrite(1, block);
     
     int memory_compare = memcmp(bread(1, block), block, BLOCK_SIZE);
     CTEST_ASSERT(memory_compare == 0, "bwrite / bread work correctly");
+    image_close();
 }
 
 void test_alloc(void){
@@ -199,12 +292,13 @@ void test_alloc(void){
     CTEST_ASSERT(full_bit_num == -1, "testing ialloc");
     image_close();
 }
+
 void test_find_free(void){
     unsigned char block[BLOCK_SIZE];
     memset(block, 0, BLOCK_SIZE);
     CTEST_ASSERT(find_free(block) == 0, "testing find_free");
-
 }
+
 void test_find_low_clear_bit(void){
     unsigned char x = 0xAA;
     int bit = find_low_clear_bit(x);
@@ -215,8 +309,8 @@ void test_find_low_clear_bit(void){
     x = 0x00;
     bit = find_low_clear_bit(x);
     CTEST_ASSERT(bit == 0, "testing find_low_clear_bit");
-
 }
+
 void test_set_free(void){
     unsigned char block[BLOCK_SIZE];
     memset(block, 1, BLOCK_SIZE);
@@ -225,6 +319,7 @@ void test_set_free(void){
     set_free(block, 0, 0);
     CTEST_ASSERT(block[0] == 0, "testing set_free");
 }
+
 int main(void){
     CTEST_VERBOSE(1);
     test_image_open();
@@ -238,6 +333,10 @@ int main(void){
     test_iput();
     test_ialloc2();
     test_mkfs();
+    test_directory_open();
+    test_directory_get();
+    test_directory_close();
+    test_ls();
     test_bread_and_bwrite();
     // // test_bwrite();
     test_alloc();

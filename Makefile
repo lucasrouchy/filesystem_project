@@ -1,9 +1,13 @@
-prog: block.o pack.o free.o image.o inode.o mkfs.o simfs_test.o 
+prog: block.o pack.o ls.o free.o image.o inode.o mkfs.o simfs_test.o 
 	gcc -o $@ $^
 block.o: block.c 
 	gcc -Wall -Wextra -c $<
 pack.o: pack.c
 	gcc -Wall -Wextra -c $<
+
+ls.o: ls.c
+	gcc -Wall -Wextra -c $<
+
 free.o: free.c
 	gcc -Wall -Wextra -c $<
 image.o: image.c
@@ -15,7 +19,7 @@ mkfs.o: mkfs.c
 simfs_test.o: simfs_test.c
 	gcc -Wall -Wextra -c $<
 
-simfs.a: block.o pack.o free.o image.o inode.o mkfs.o simfs_test.o
+simfs.a: block.o pack.o ls.o free.o image.o inode.o mkfs.o simfs_test.o
 	ar -rcs $@ $^
 main.o: main.c
 	gcc -Wall -Wextra -o $@
