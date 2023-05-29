@@ -19,16 +19,14 @@ void mkfs(void){
     root_in->flags = 2;
     root_in->inode_num = 0;
     root_in->block_ptr[0] = data_block_num;
-    
-    iput(root_in);
 
-    bread(2, dir_block);
+    bread(data_block_num, dir_block);
 
     write_u16(dir_block, inode_num);
     strcpy((char *)dir_block + 2, ".");
     strcpy((char *)dir_block + 18, "..");
     
-    bwrite(2, dir_block);
+    bwrite(data_block_num, dir_block);
     iput(root_in);
 }
 

@@ -1,6 +1,11 @@
 #ifndef MKFS_H
 #define MKFS_H
-
+#define FREE_BLOCK_MAP_NUM 2
+#define ROOT_INODE_NUM 0
+#define ROOT_DATA_BLOCK_NUM 3
+#define ROOT_DIR_INODE_NUM 1
+#define ROOT_DIR_DATA_BLOCK_NUM 4
+#define INODE_MAP_NUM 1
 void mkfs(void);
 struct directory *directory_open(int inode_num);
 

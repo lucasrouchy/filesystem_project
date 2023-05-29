@@ -228,7 +228,7 @@ void test_directory_get(void){
     CTEST_ASSERT(ent.inode_num == 0, "testing directory_get");
 
     //I'm pretty sure my offset math is correct for where the directory name should be but this test still fails
-    // CTEST_ASSERT(strcmp(ent.name, ".") == 0, "testing directory_get");
+    CTEST_ASSERT(strcmp(ent.name, ".") == 0, "testing directory_get");
     get = directory_get(dir, &ent);
     get = directory_get(dir, &ent);
     get = directory_get(dir, &ent);
