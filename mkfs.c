@@ -23,8 +23,8 @@ void mkfs(void){
     bread(data_block_num, dir_block);
 
     write_u16(dir_block, inode_num);
-    strcpy((char *)dir_block + 2, ".");
-    strcpy((char *)dir_block + 18, "..");
+    strncpy((char *)dir_block + 2, ".", 16);
+    strncpy((char *)dir_block + 18, "..", 16);
     
     bwrite(data_block_num, dir_block);
     iput(root_in);
@@ -55,7 +55,9 @@ int directory_get(struct directory *dir, struct directory_entry *ent){
     unsigned int offset = dir->offset % BLOCK_SIZE;
    
     ent->inode_num = read_u16(block + offset);
-    strcpy(ent->name, (char *)block + offset + 2);
+    strncpy(ent->name, (char *)block + offset + 2, 16);
+    ent->name[15] = '\0';
+
     dir->offset += 18;
     return 0;
 }
