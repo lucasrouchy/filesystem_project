@@ -1,6 +1,7 @@
 #ifndef PACK_H
 #define PACK_H
 
+#define INODE_NUM_SIZE 2
 unsigned int read_u32(void *addr);
 unsigned short read_u16(void *addr);
 unsigned char read_u8(void *addr);

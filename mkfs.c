@@ -24,7 +24,9 @@ void mkfs(void){
 
     write_u16(dir_block, inode_num);
     strncpy((char *)dir_block + 2, ".", 16);
-    strncpy((char *)dir_block + 18, "..", 16);
+
+    write_u16(dir_block + DIRECTORY_SIZE, inode_num);
+    strncpy((char *)dir_block + DIRECTORY_SIZE + 2, "..", 16);
     
     bwrite(root_in->block_ptr[0], dir_block);
     iput(root_in);
@@ -65,4 +67,53 @@ int directory_get(struct directory *dir, struct directory_entry *ent){
 void directory_close(struct directory *d){
     iput(d->inode);
     free(d);
+}
+struct inode *namei(char *path){
+    struct directory *dir = directory_open(ROOT_INODE_NUM);
+    struct directory_entry ent;
+    int i = 0;
+    //while the path is not invalid 
+    while(path[i] != '\0'){
+        //if tthe directory get fails return null
+        if(directory_get(dir, &ent) == -1){
+            return NULL;
+        }
+
+        if(strcmp(ent.name, path) == 0 && dir->inode->ref_count != 0){
+            return iget(ent.inode_num);
+        }
+    }
+    return NULL;
+
+}
+int directory_make(char *path){
+    unsigned char dir_block[BLOCK_SIZE];
+    struct directory *dir = directory_open(ROOT_INODE_NUM);
+    struct directory_entry ent;
+    int i = 0;
+    while(path[i] != '/'){
+        if(directory_get(dir, &ent) == -1){
+            return -1;
+        }
+        if(strcmp(ent.name, path) == 0){
+            return -1;
+        }
+    }
+    int inode_num = ialloc();
+    int data_block_num = alloc();
+    struct inode *dir_in = iget(inode_num);
+    dir_in->size = 64;
+    dir_in->flags = 2;
+    dir_in->inode_num = inode_num;
+    dir_in->block_ptr[0] = data_block_num;
+
+    bread(dir_in->block_ptr[0], dir_block);
+
+    write_u16(dir_block, inode_num);
+    strncpy((char *)dir_block + 2, ".", 16);
+    strncpy((char *)dir_block + 18, "..", 16);
+    
+    bwrite(dir_in->block_ptr[0], dir_block);
+    iput(dir_in);
+    return 0;
 }

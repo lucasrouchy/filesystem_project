@@ -6,6 +6,9 @@
 #define ROOT_DIR_INODE_NUM 1
 #define ROOT_DIR_DATA_BLOCK_NUM 4
 #define INODE_MAP_NUM 1
+#define DIRECTORY_SIZE 32
+#include "inode.h"
+#include "dirbasename.c"
 void mkfs(void);
 struct directory *directory_open(int inode_num);
 
@@ -19,4 +22,6 @@ struct directory_entry {
 };
 int directory_get(struct directory *dir, struct directory_entry *ent);
 void directory_close(struct directory *d);
+struct inode *namei(char *path);
+int directory_make(char *path);
 #endif

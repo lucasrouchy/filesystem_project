@@ -1,4 +1,4 @@
-
+#define CTEST_MAIN
 #include "image.h"
 #include "ctest.h"
 #include "block.h"
