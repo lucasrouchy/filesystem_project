@@ -73,7 +73,7 @@ struct inode *namei(char *path){
     struct directory_entry ent;
     int i = 0;
     //while the path is not invalid 
-    while(path[i] != '\0'){
+    while(path[i] != '/'){
         //if tthe directory get fails return null
         if(directory_get(dir, &ent) == -1){
             return NULL;

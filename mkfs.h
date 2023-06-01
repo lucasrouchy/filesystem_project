@@ -8,7 +8,7 @@
 #define INODE_MAP_NUM 1
 #define DIRECTORY_SIZE 32
 #include "inode.h"
-#include "dirbasename.c"
+#include "dirbasename.h"
 void mkfs(void);
 struct directory *directory_open(int inode_num);
 
