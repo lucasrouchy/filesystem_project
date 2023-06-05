@@ -68,6 +68,7 @@ void directory_close(struct directory *d){
     iput(d->inode);
     free(d);
 }
+
 struct inode *namei(char *path){
     struct directory *dir = directory_open(ROOT_INODE_NUM);
     struct directory_entry ent;
@@ -84,36 +85,58 @@ struct inode *namei(char *path){
         }
     }
     return NULL;
-
 }
-int directory_make(char *path){
-    unsigned char dir_block[BLOCK_SIZE];
-    struct directory *dir = directory_open(ROOT_INODE_NUM);
+
+int directory_make(char *path) {
+    char dir_path[1024];
+    char *dirname = get_dirname(path, dir_path);
+    char *basename = get_basename(path, dir_path);
+    struct inode *parent_in = namei(dirname);
+    if (parent_in == NULL) {
+        return -1; // Parent directory doesn't exist
+    }
+    // Check if the new directory already exists
     struct directory_entry ent;
-    int i = 0;
-    while(path[i] != '/'){
-        if(directory_get(dir, &ent) == -1){
-            return -1;
-        }
-        if(strcmp(ent.name, path) == 0){
-            return -1;
+    struct directory *parent_dir = directory_open(parent_in->inode_num);
+    while (directory_get(parent_dir, &ent) != -1) {
+        if (strcmp(ent.name, basename) == 0) {
+            directory_close(parent_dir);
+            iput(parent_in);
+            return -1; // Directory already exists
         }
     }
     int inode_num = ialloc();
     int data_block_num = alloc();
-    struct inode *dir_in = iget(inode_num);
-    dir_in->size = 64;
-    dir_in->flags = 2;
-    dir_in->inode_num = inode_num;
-    dir_in->block_ptr[0] = data_block_num;
-
-    bread(dir_in->block_ptr[0], dir_block);
-
+    struct inode *new_in = iget(inode_num);
+    // Initialize the new directory inode
+    new_in->size = 2 * sizeof(struct directory_entry); // Size of . and ..
+    new_in->flags = 2; // Directory type
+    new_in->inode_num = inode_num;
+    new_in->block_ptr[0] = data_block_num;
+    unsigned char dir_block[BLOCK_SIZE];
+    bread(new_in->block_ptr[0], dir_block);
+    // Add . and .. entries to the new directory data block
     write_u16(dir_block, inode_num);
-    strncpy((char *)dir_block + 2, ".", 16);
-    strncpy((char *)dir_block + 18, "..", 16);
-    
-    bwrite(dir_in->block_ptr[0], dir_block);
-    iput(dir_in);
+    strncpy((char *)dir_block + sizeof(struct directory_entry), ".", sizeof(ent.name));
+    strncpy((char *)dir_block + 2 * sizeof(struct directory_entry), "..", sizeof(ent.name));
+    bwrite(new_in->block_ptr[0], dir_block);
+    // Add the new directory entry to the parent directory
+    struct directory_entry new_entry;
+    new_entry.inode_num = inode_num;
+    strncpy(new_entry.name, basename, sizeof(ent.name));
+    int block_idx = parent_in->size / BLOCK_SIZE;
+    bread(parent_in->block_ptr[block_idx], dir_block);
+
+    int offset = parent_in->size % BLOCK_SIZE;
+    struct directory_entry *entry_ptr = (struct directory_entry *)(dir_block + offset);
+    *entry_ptr = new_entry;
+
+    bwrite(parent_in->block_ptr[block_idx], dir_block);
+
+    parent_in->size += sizeof(struct directory_entry);
+
+    iput(new_in);
+    iput(parent_in);
+    directory_close(parent_dir);
     return 0;
 }

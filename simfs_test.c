@@ -263,6 +263,18 @@ void test_ls(void){
     image_close();
 }
 
+void test_namei(void){
+    image_open("namei", 1);
+    mkfs();
+    // struct inode *in = namei("/..");
+    // CTEST_ASSERT(in != NULL, "testing namei");
+    struct inode *fake = namei("/fake");
+    CTEST_ASSERT(fake == NULL, "testing namei");
+    // iput(in);
+    image_close();
+}
+
+
 void test_bread_and_bwrite(void){
     image_open("bread and bwrite", 1);
     unsigned char block[BLOCK_SIZE];
@@ -337,6 +349,8 @@ int main(void){
     test_directory_get();
     test_directory_close();
     test_ls();
+    test_namei();
+    // test_make_directory();
     test_bread_and_bwrite();
     // // test_bwrite();
     test_alloc();
