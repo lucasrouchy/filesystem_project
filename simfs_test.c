@@ -274,6 +274,14 @@ void test_namei(void){
     image_close();
 }
 
+void test_make_directory(void){
+    image_open("make_directory", 1);
+    mkfs();
+    int make = directory_make("/test");
+    CTEST_ASSERT(make == 0, "testing make_directory");
+    
+    image_close();
+}
 
 void test_bread_and_bwrite(void){
     image_open("bread and bwrite", 1);

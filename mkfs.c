@@ -23,10 +23,10 @@ void mkfs(void){
     bread(root_in->block_ptr[0], dir_block);
 
     write_u16(dir_block, inode_num);
-    strncpy((char *)dir_block + 2, ".", 16);
+    strncpy((char *)dir_block + 2, ".", DIRECTORY_ENTRY_COUNT);
 
     write_u16(dir_block + DIRECTORY_SIZE, inode_num);
-    strncpy((char *)dir_block + DIRECTORY_SIZE + 2, "..", 16);
+    strncpy((char *)dir_block + DIRECTORY_SIZE + 2, "..", DIRECTORY_ENTRY_COUNT);
     
     bwrite(root_in->block_ptr[0], dir_block);
     iput(root_in);
@@ -57,10 +57,10 @@ int directory_get(struct directory *dir, struct directory_entry *ent){
     unsigned int offset = dir->offset % BLOCK_SIZE;
    
     ent->inode_num = read_u16(block + offset);
-    strncpy(ent->name, (char *)block + offset + 2, 16);
+    strncpy(ent->name, (char *)block + offset + 2, DIRECTORY_ENTRY_COUNT);
     ent->name[15] = '\0';
 
-    dir->offset += 32;
+    dir->offset += DIRECTORY_SIZE;
     return 0;
 }
 
@@ -83,50 +83,43 @@ int directory_make(char *path) {
     char *basename = get_basename(path, dir_path);
     struct inode *parent_in = namei(dirname);
     if (parent_in == NULL) {
-        return -1; // Parent directory doesn't exist
+        return -1; 
     }
-    // Check if the new directory already exists
-    struct directory_entry ent;
-    struct directory *parent_dir = directory_open(parent_in->inode_num);
-    while (directory_get(parent_dir, &ent) != -1) {
-        if (strcmp(ent.name, basename) == 0) {
-            directory_close(parent_dir);
-            iput(parent_in);
-            return -1; // Directory already exists
-        }
-    }
+
     int inode_num = ialloc();
     int data_block_num = alloc();
+    //create new block sized array for new directory
+    unsigned char dir_block[BLOCK_SIZE];
+
     struct inode *new_in = iget(inode_num);
-    // Initialize the new directory inode
-    new_in->size = 2 * sizeof(struct directory_entry); // Size of . and ..
-    new_in->flags = 2; // Directory type
+    new_in->size = 64;
+    new_in->flags = 2;
     new_in->inode_num = inode_num;
     new_in->block_ptr[0] = data_block_num;
-    unsigned char dir_block[BLOCK_SIZE];
+
     bread(new_in->block_ptr[0], dir_block);
-    // Add . and .. entries to the new directory data block
+
     write_u16(dir_block, inode_num);
-    strncpy((char *)dir_block + sizeof(struct directory_entry), ".", sizeof(ent.name));
-    strncpy((char *)dir_block + 2 * sizeof(struct directory_entry), "..", sizeof(ent.name));
+    strncpy((char *)dir_block + 2, ".", DIRECTORY_ENTRY_COUNT);
+
+    write_u16(dir_block + DIRECTORY_SIZE, parent_in->inode_num);
+    strncpy((char *)dir_block + DIRECTORY_SIZE + 2, "..", DIRECTORY_ENTRY_COUNT);
+
     bwrite(new_in->block_ptr[0], dir_block);
-    // Add the new directory entry to the parent directory
-    struct directory_entry new_entry;
-    new_entry.inode_num = inode_num;
-    strncpy(new_entry.name, basename, sizeof(ent.name));
-    int block_idx = parent_in->size / BLOCK_SIZE;
-    bread(parent_in->block_ptr[block_idx], dir_block);
-
-    int offset = parent_in->size % BLOCK_SIZE;
-    struct directory_entry *entry_ptr = (struct directory_entry *)(dir_block + offset);
-    *entry_ptr = new_entry;
-
-    bwrite(parent_in->block_ptr[block_idx], dir_block);
-
-    parent_in->size += sizeof(struct directory_entry);
-
+    // from the parent directory inode find the block that will contain the new directory using the size and block_ptr
+    
+    unsigned int parent_size = parent_in->size;
+    unsigned int parent_block_index = parent_size / BLOCK_SIZE;
+    unsigned int parent_offset = parent_size % BLOCK_SIZE;
+    unsigned int parent_block_num = parent_in->block_ptr[parent_block_index];
+    bread(parent_block_num, dir_block);
+    write_u16(dir_block + parent_offset, inode_num);
+    //I think this is where the problem is not sure how to find the block correctly
+    strncpy((char *)dir_block + parent_offset + 2, basename, DIRECTORY_ENTRY_COUNT);
+    bwrite(parent_block_num, dir_block);
+    parent_in->size += DIRECTORY_SIZE;
     iput(new_in);
     iput(parent_in);
-    directory_close(parent_dir);
+    
     return 0;
 }
