@@ -266,11 +266,11 @@ void test_ls(void){
 void test_namei(void){
     image_open("namei", 1);
     mkfs();
-    // struct inode *in = namei("/..");
-    // CTEST_ASSERT(in != NULL, "testing namei");
+    struct inode *in = namei("/");
+    CTEST_ASSERT(in != NULL, "testing namei");
     struct inode *fake = namei("/fake");
     CTEST_ASSERT(fake == NULL, "testing namei");
-    // iput(in);
+    iput(in);
     image_close();
 }
 

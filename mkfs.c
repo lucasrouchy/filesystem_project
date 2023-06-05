@@ -69,23 +69,13 @@ void directory_close(struct directory *d){
     free(d);
 }
 
-struct inode *namei(char *path){
-    struct directory *dir = directory_open(ROOT_INODE_NUM);
-    struct directory_entry ent;
-    int i = 0;
-    //while the path is not invalid 
-    while(path[i] != '/'){
-        //if tthe directory get fails return null
-        if(directory_get(dir, &ent) == -1){
-            return NULL;
-        }
-
-        if(strcmp(ent.name, path) == 0 && dir->inode->ref_count != 0){
-            return iget(ent.inode_num);
-        }
+struct inode *namei(char *path) {
+    if (strcmp(path, "/") == 0) {
+        return iget(ROOT_INODE_NUM);
     }
     return NULL;
 }
+
 
 int directory_make(char *path) {
     char dir_path[1024];
