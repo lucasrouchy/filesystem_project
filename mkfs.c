@@ -78,6 +78,7 @@ struct inode *namei(char *path) {
 
 
 int directory_make(char *path) {
+    struct directory_entry ent;
     char dir_path[1024];
     char *dirname = get_dirname(path, dir_path);
     char *basename = get_basename(path, dir_path);
@@ -92,30 +93,34 @@ int directory_make(char *path) {
     unsigned char dir_block[BLOCK_SIZE];
 
     struct inode *new_in = iget(inode_num);
-    new_in->size = 64;
-    new_in->flags = 2;
-    new_in->inode_num = inode_num;
-    new_in->block_ptr[0] = data_block_num;
 
-    bread(new_in->block_ptr[0], dir_block);
-
+    //step 6
     write_u16(dir_block, inode_num);
     strncpy((char *)dir_block + 2, ".", DIRECTORY_ENTRY_COUNT);
 
     write_u16(dir_block + DIRECTORY_SIZE, parent_in->inode_num);
     strncpy((char *)dir_block + DIRECTORY_SIZE + 2, "..", DIRECTORY_ENTRY_COUNT);
-
-    bwrite(new_in->block_ptr[0], dir_block);
-    // from the parent directory inode find the block that will contain the new directory using the size and block_ptr
+    //step 7
+    new_in->size = 64;
+    new_in->flags = 2;
+    new_in->inode_num = inode_num;
+    new_in->block_ptr[0] = data_block_num;
+    //step 8 write the new directory data block to the disk
+    bwrite(new_in->block_ptr[0], dir_block);    
+    //Step 9: from the parent directory inode find the block that will contain the new directory using the size and block_ptr
     
     unsigned int parent_size = parent_in->size;
     unsigned int parent_block_index = parent_size / BLOCK_SIZE;
-    unsigned int parent_offset = parent_size % BLOCK_SIZE;
+    unsigned int parent_dir_space = parent_size / MAX_DIR_SPACE;
     unsigned int parent_block_num = parent_in->block_ptr[parent_block_index];
+    unsigned int parent_block_offset = parent_size % BLOCK_SIZE;
+    if (parent_dir_space == 1){
+        return -1;
+    }
     bread(parent_block_num, dir_block);
-    write_u16(dir_block + parent_offset, inode_num);
-    //I think this is where the problem is not sure how to find the block correctly
-    strncpy((char *)dir_block + parent_offset + 2, basename, DIRECTORY_ENTRY_COUNT);
+    write_u16(dir_block + parent_block_offset, inode_num);
+    strncpy((char *)dir_block + parent_block_offset + 2, basename, DIRECTORY_ENTRY_COUNT);
+
     bwrite(parent_block_num, dir_block);
     parent_in->size += DIRECTORY_SIZE;
     iput(new_in);

@@ -277,9 +277,8 @@ void test_namei(void){
 void test_make_directory(void){
     image_open("make_directory", 1);
     mkfs();
-    int make = directory_make("/test");
+    int make = directory_make("/foo");
     CTEST_ASSERT(make == 0, "testing make_directory");
-    
     image_close();
 }
 
@@ -358,7 +357,7 @@ int main(void){
     test_directory_close();
     test_ls();
     test_namei();
-    // test_make_directory();
+    test_make_directory();
     test_bread_and_bwrite();
     // // test_bwrite();
     test_alloc();
