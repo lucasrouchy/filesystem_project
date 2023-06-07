@@ -18,7 +18,7 @@
 void test_make_directory(void){
     image_open("make_directory", 1);
     mkfs();
-    int make = directory_make("/foo");
+    int make = directory_make("/");
     CTEST_ASSERT(make == 0, "testing make_directory");
     image_close();
 }
@@ -343,7 +343,7 @@ void test_set_free(void){
 
 int main(void){
     CTEST_VERBOSE(1);
-    // test_make_directory();
+    test_make_directory();
     test_image_open();
     test_image_close();
     test_ialloc();
