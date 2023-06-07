@@ -73,15 +73,19 @@ struct inode *namei(char *path) {
     if (strcmp(path, "/") == 0) {
         return iget(ROOT_INODE_NUM);
     }
+    // if (strcmp(path, "/foo") == 0) {
+    //     return iget(ROOT_INODE_NUM);
+    // }
     return NULL;
 }
 
 
 int directory_make(char *path) {
     char dir_path[1024];
-    char *dirname = get_dirname(path, dir_path);
-    char *basename = get_basename(path, dir_path);
-    struct inode *parent_in = namei(dirname);
+    char base_name_path[1024];
+    get_dirname(path, dir_path);
+    get_basename(path, base_name_path);
+    struct inode *parent_in = namei(dir_path);
     if (parent_in == NULL) {
         return -1; 
     }
@@ -118,7 +122,7 @@ int directory_make(char *path) {
     // }
     bread(parent_block_num, dir_block);
     write_u16(dir_block + parent_block_offset, inode_num);
-    strncpy((char *)dir_block + parent_block_offset + 2, basename, DIRECTORY_ENTRY_COUNT);
+    strncpy((char *)dir_block + parent_block_offset + 2, base_name_path, DIRECTORY_ENTRY_COUNT);
 
     bwrite(parent_block_num, dir_block);
     parent_in->size += DIRECTORY_SIZE;

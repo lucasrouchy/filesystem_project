@@ -18,8 +18,11 @@
 void test_make_directory(void){
     image_open("make_directory", 1);
     mkfs();
-    int make = directory_make("/");
+    int make = directory_make("/foo");
     CTEST_ASSERT(make == 0, "testing make_directory");
+    // int make2 = directory_make("/foo");
+    // CTEST_ASSERT(make2 == 0, "testing make_directory");
+
     image_close();
 }
 
