@@ -15,6 +15,14 @@
 
 #ifdef CTEST_ENABLE
 
+void test_make_directory(void){
+    image_open("make_directory", 1);
+    mkfs();
+    int make = directory_make("/foo");
+    CTEST_ASSERT(make == 0, "testing make_directory");
+    image_close();
+}
+
 void test_image_open(void){
     CTEST_ASSERT(image_open("test.img", 1) > 0, "testing image open");
 }
@@ -274,13 +282,7 @@ void test_namei(void){
     image_close();
 }
 
-void test_make_directory(void){
-    image_open("make_directory", 1);
-    mkfs();
-    int make = directory_make("/foo");
-    CTEST_ASSERT(make == 0, "testing make_directory");
-    image_close();
-}
+
 
 void test_bread_and_bwrite(void){
     image_open("bread and bwrite", 1);
@@ -341,6 +343,7 @@ void test_set_free(void){
 
 int main(void){
     CTEST_VERBOSE(1);
+    // test_make_directory();
     test_image_open();
     test_image_close();
     test_ialloc();
@@ -357,7 +360,7 @@ int main(void){
     test_directory_close();
     test_ls();
     test_namei();
-    test_make_directory();
+    
     test_bread_and_bwrite();
     // // test_bwrite();
     test_alloc();

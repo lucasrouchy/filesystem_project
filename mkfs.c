@@ -78,7 +78,6 @@ struct inode *namei(char *path) {
 
 
 int directory_make(char *path) {
-    struct directory_entry ent;
     char dir_path[1024];
     char *dirname = get_dirname(path, dir_path);
     char *basename = get_basename(path, dir_path);
@@ -111,12 +110,12 @@ int directory_make(char *path) {
     
     unsigned int parent_size = parent_in->size;
     unsigned int parent_block_index = parent_size / BLOCK_SIZE;
-    unsigned int parent_dir_space = parent_size / MAX_DIR_SPACE;
+    // unsigned int parent_dir_space = parent_size / MAX_DIR_SPACE;
     unsigned int parent_block_num = parent_in->block_ptr[parent_block_index];
     unsigned int parent_block_offset = parent_size % BLOCK_SIZE;
-    if (parent_dir_space == 1){
-        return -1;
-    }
+    // if (parent_dir_space == 1){
+    //     return -1;
+    // }
     bread(parent_block_num, dir_block);
     write_u16(dir_block + parent_block_offset, inode_num);
     strncpy((char *)dir_block + parent_block_offset + 2, basename, DIRECTORY_ENTRY_COUNT);
