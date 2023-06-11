@@ -6,6 +6,7 @@
 #define INODES_PER_BLOCK (BLOCK_SIZE / INODE_SIZE)
 #define MAX_SYS_OPEN_FILES 64
 #define FIRST_INODE_BLOCK 3
+#define FIRST_DISK_BLOCK 1
 struct inode {
     unsigned int size;
     unsigned short owner_id;

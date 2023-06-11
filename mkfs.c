@@ -104,7 +104,7 @@ int directory_make(char *path) {
     write_u16(dir_block + DIRECTORY_SIZE, parent_in->inode_num);
     strncpy((char *)dir_block + DIRECTORY_SIZE + 2, "..", DIRECTORY_ENTRY_COUNT);
     //step 7
-    new_in->size = 64;
+    new_in->size = INODE_SIZE;
     new_in->flags = 2;
     new_in->inode_num = inode_num;
     new_in->block_ptr[0] = data_block_num;
@@ -114,12 +114,12 @@ int directory_make(char *path) {
     
     unsigned int parent_size = parent_in->size;
     unsigned int parent_block_index = parent_size / BLOCK_SIZE;
-    // unsigned int parent_dir_space = parent_size / MAX_DIR_SPACE;
+    unsigned int parent_dir_space = parent_size / MAX_DIR_SPACE;
     unsigned int parent_block_num = parent_in->block_ptr[parent_block_index];
     unsigned int parent_block_offset = parent_size % BLOCK_SIZE;
-    // if (parent_dir_space == 1){
-    //     return -1;
-    // }
+    if (parent_dir_space == 1){
+        return -1;
+    }
     bread(parent_block_num, dir_block);
     write_u16(dir_block + parent_block_offset, inode_num);
     strncpy((char *)dir_block + parent_block_offset + 2, base_name_path, DIRECTORY_ENTRY_COUNT);

@@ -112,7 +112,7 @@ int ialloc(void){
     unsigned char block[BLOCK_SIZE] = {0};
     int bit_num = -1;
     // read inode map from disk
-    bread(1, block);
+    bread(FIRST_DISK_BLOCK, block);
     // find a free inode
     bit_num = find_free(block);
     
@@ -141,6 +141,6 @@ int ialloc(void){
     in->inode_num = bit_num;
 
     write_inode(in);
-    
+    bwrite(FIRST_DISK_BLOCK, block);
     return bit_num;
 }

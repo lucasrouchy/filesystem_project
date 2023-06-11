@@ -9,6 +9,7 @@
 #define DIRECTORY_SIZE 32
 #define DIRECTORY_ENTRY_COUNT 16
 #define MAX_DIR_SPACE 128
+#define INODE_SIZE 64
 #include "inode.h"
 #include "dirbasename.h"
 void mkfs(void);
